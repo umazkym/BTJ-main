@@ -8,10 +8,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend, ChartOptions } from 'chart.js';
 import axios from 'axios';
 
-// レーダーチャートのコンポーネント
+// レーダーチャートの設定
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
-// 選択肢の設定
+// 銘柄の選択肢
 const brandOptions = [
   { value: "1", label: "黒ラベル" },
   { value: "2", label: "ヱビスビール" },
@@ -45,9 +45,11 @@ const brandOptions = [
   { value: "30", label: "南信州ビール AppleHop" },
 ];
 
+// 性別と年齢の選択肢
 const genderOptions = ["男性", "女性"];
 const ageOptions = ["20代", "30代", "40代", "50代", "60代", "70代～"];
 
+// レーダーチャートのデータ型
 interface RadarData {
   labels: string[];
   datasets: {
@@ -59,6 +61,7 @@ interface RadarData {
   }[];
 }
 
+// フィルタのデータ型
 interface Filter {
   selectedOptions: string[];
   selectedBrand: string | null;
@@ -69,20 +72,159 @@ interface Filter {
   fetchedData: any;
 }
 
+// レーダーチャートの初期値
 const initialRadarData: RadarData = {
   labels: [
     'しっかりとした苦味', '飲みごたえ', '濃厚な味わい', 'まろやか', 'やわらかな苦味', 'フルーティな味わい', '爽快なキレ', '後味（余韻）がよい'
   ],
   datasets: [
     {
-      label: 'サンプルデータセット',
-      data: [3, 3, 4, 1, 2, 5, 4, 5],
+      label: '',
+      data: [0, 0, 0, 0, 0, 0, 0, 0],
       backgroundColor: 'rgba(34, 202, 236, 0.2)',
       borderColor: 'rgba(34, 202, 236, 1)',
       borderWidth: 2,
     },
   ],
 };
+
+// レーダーチャートの設定
+const radarOptions: ChartOptions<'radar'> = {
+  scales: {
+    r: {
+      beginAtZero: true,
+      min: 0,
+      max: 5,
+      pointLabels: {
+        font: {
+          size: 16,
+        },
+      },
+    },
+  },
+  plugins: {
+    legend: {
+      labels: {
+        font: {
+          size: 12,
+        },
+        usePointStyle: true,
+        pointStyle: 'line',
+      },
+    },
+  },
+  maintainAspectRatio: false,
+};
+
+// フィルタコンポーネント
+const FilterComponent: React.FC<{ filter: Filter, index: number, handleCheckboxChange: any, handleBrandChange: any, handleDateChange: any, updateRadarData: any }> = ({
+  filter, index, handleCheckboxChange, handleBrandChange, handleDateChange, updateRadarData
+}) => (
+  <div key={index} className='flex flex-col lg:flex-row mb-10 bg-white shadow-lg rounded-lg'>
+    <div className='w-full lg:w-1/2 p-4'>
+      <h2 className='font-bold text-xl mb-4'>銘柄</h2>
+      <Select
+        options={brandOptions}
+        onChange={(selectedOption) => handleBrandChange(index, selectedOption as SingleValue<{ value: string, label: string }>)}
+        className='mb-4'
+      />
+
+      <h2 className='font-bold text-xl mb-4'>性別</h2>
+      <div className='flex flex-wrap bg-white'>
+        {genderOptions.map((option) => (
+          <div key={option} className='mr-4 mb-2'>
+            <label className='flex items-center space-x-2'>
+              <input
+                type="checkbox"
+                value={option}
+                checked={filter.selectedOptions.includes(option)}
+                onChange={(event) => handleCheckboxChange(index, event, genderOptions)}
+                className='form-checkbox'
+              />
+              <span>{option}</span>
+            </label>
+          </div>
+        ))}
+        <label className='flex items-center space-x-2'>
+          <input
+            type="checkbox"
+            value="全て"
+            checked={genderOptions.every(option => filter.selectedOptions.includes(option))}
+            onChange={(event) => handleCheckboxChange(index, event, genderOptions)}
+            className='form-checkbox'
+          />
+          <span>全て</span>
+        </label>
+      </div>
+
+      <h2 className='font-bold text-xl mb-4'>年齢</h2>
+      <div className='flex flex-wrap bg-white'>
+        {ageOptions.map((option) => (
+          <div key={option} className='mr-4 mb-2'>
+            <label className='flex items-center space-x-2'>
+              <input
+                type="checkbox"
+                value={option}
+                checked={filter.selectedOptions.includes(option)}
+                onChange={(event) => handleCheckboxChange(index, event, ageOptions)}
+                className='form-checkbox'
+              />
+              <span>{option}</span>
+            </label>
+          </div>
+        ))}
+        <label className='flex items-center space-x-2'>
+          <input
+            type="checkbox"
+            value="全て"
+            checked={ageOptions.every(option => filter.selectedOptions.includes(option))}
+            onChange={(event) => handleCheckboxChange(index, event, ageOptions)}
+            className='form-checkbox'
+          />
+          <span>全て</span>
+        </label>
+      </div>
+
+      <h2 className='font-bold text-xl mb-4'>購入日</h2>
+      <div className="flex flex-col space-y-2">
+        <DatePicker
+          selected={filter.startDate}
+          onChange={(date) => handleDateChange(index, date, 'start')}
+          selectsStart
+          startDate={filter.startDate}
+          endDate={filter.endDate}
+          dateFormat="yyyy/MM/dd"
+          placeholderText="開始日"
+          className='w-full border rounded-md p-2'
+        />
+        <DatePicker
+          selected={filter.endDate}
+          onChange={(date) => handleDateChange(index, date, 'end')}
+          selectsEnd
+          startDate={filter.startDate}
+          endDate={filter.endDate}
+          minDate={filter.startDate}
+          dateFormat="yyyy/MM/dd"
+          placeholderText="終了日"
+          className='w-full border rounded-md p-2'
+        />
+      </div>
+
+      <button
+        onClick={() => updateRadarData(index)}
+        className='mt-5 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-300'
+      >
+        検索
+      </button>
+    </div>
+    <div className='w-full lg:w-1/2 p-4'>
+      <h2 className='font-bold text-xl mb-4'>レーダーチャート</h2>
+      <div className='relative bg-white shadow-lg rounded-lg p-4' style={{ height: '400px' }}>
+        <Radar className='w-full' data={filter.radarData} options={radarOptions} />
+      </div>
+    </div>
+  </div>
+);
 
 const Page: React.FC = () => {
   // フィルタ条件を保持
@@ -100,7 +242,7 @@ const Page: React.FC = () => {
     const value = event.target.value;
     const newFilters = [...filters];
     if (value === "全て") {
-      // 「全て」が選択された場合、全てのチェックボックを選択または解除
+      // 「全て」が選択された場合、全てのチェックボックスを選択または解除
       if (group.every(option => newFilters[index].selectedOptions.includes(option))) {
         newFilters[index].selectedOptions = newFilters[index].selectedOptions.filter(option => !group.includes(option));
       } else {
@@ -113,7 +255,6 @@ const Page: React.FC = () => {
         : [...newFilters[index].selectedOptions, value];
     }
     setFilters(newFilters);
-    fetchData(index); // フィルタが変更されたときにデータを取得
   };
 
   // 銘柄の選択変更を処理する関数
@@ -121,7 +262,6 @@ const Page: React.FC = () => {
     const newFilters = [...filters];
     newFilters[index].selectedBrand = selectedOption ? selectedOption.value : null;
     setFilters(newFilters);
-    fetchData(index); // フィルタが変更されたときにデータを取得
   };
 
   // 日付の変更を処理する関数
@@ -133,10 +273,9 @@ const Page: React.FC = () => {
       newFilters[index].endDate = date || undefined;
     }
     setFilters(newFilters);
-    fetchData(index); // フィルタが変更されたときにデータを取得
   };
 
-  // 日付の表記を処理する関数
+  // 日付のフォーマットを処理する関数
   const formatDate = (date: Date | undefined) => {
     if (!date) return null;
     const year = date.getFullYear();
@@ -145,21 +284,24 @@ const Page: React.FC = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // パラメータ設定
+  // データを取得する関数
   const fetchData = async (index: number) => {
     const filter = filters[index];
+
+    // 性別フィルタのパラメータを作成
     const genderParams = genderOptions
       .filter(option => filter.selectedOptions.includes(option))
       .map(option => (option === "男性" ? "0" : "1"))
       .map(gender => `gender=${gender}`)
       .join('&');
 
+    // 年齢フィルタのパラメータを作成
     const ageParams = ageOptions
       .filter(option => filter.selectedOptions.includes(option))
       .map(age => `age_group=${age.split('代')[0]}`)
       .join('&');
 
-    // GETリクエスト時に渡すパラメータ
+    // APIリクエストのパラメータを作成
     const params = [
       filter.selectedBrand ? `brand_id=${filter.selectedBrand}` : null,
       genderParams,
@@ -168,12 +310,14 @@ const Page: React.FC = () => {
       filter.endDate ? `end_date=${formatDate(filter.endDate)}` : null
     ].filter(Boolean).join('&');
 
+    // APIリクエストのURLを設定
     const url = `http://127.0.0.1:8000/filter?${params}`;
     const newFilters = [...filters];
     newFilters[index].apiUrl = url;
     setFilters(newFilters);
 
     try {
+      // データを取得
       const response = await axios.get(url);
       const data = response.data;
 
@@ -184,46 +328,35 @@ const Page: React.FC = () => {
     }
   };
 
-  // レーダーチャートの設定
-  const radarOptions: ChartOptions<'radar'> = {
-    scales: {
-      r: {
-        beginAtZero: true,
-        min: 0, // 最小値
-        max: 5, // 最大値
-        pointLabels: {
-          font: {
-            size: 16,  // 文字サイズ
-          },
-        },
-      },
-    },
-    plugins: {
-      legend: {
-        labels: {
-          font: {
-            size: 20,  // データセットラベルの文字サイズ
-          },
-        },
-      },
-    },
-  };
-
-  const updateRadarData = (index: number) => {
+  // レーダーチャートのデータを更新する関数
+  const updateRadarData = async (index: number) => {
+    await fetchData(index);
     const filter = filters[index];
     if (!filter.fetchedData) return;
 
+    // レーダーチャートのラベルを設定
     const labels = [
       'しっかりとした苦味', '飲みごたえ', '濃厚な味わい', 'まろやか', 'やわらかな苦味', 'フルーティな味わい', '爽快なキレ', '後味（余韻）がよい'
     ];
+
+    // 取得したデータから値を設定
     const values = labels.map((label, i) => filter.fetchedData.find((item: any) => item.item_id === (i + 1))?.average_score || 0);
 
+    // 選択されたフィルタの情報を設定
+    const selectedFilters = [
+      filter.selectedBrand ? `銘柄: ${brandOptions.find(opt => opt.value === filter.selectedBrand)?.label}` : '',
+      filter.selectedOptions.length ? `性別: ${filter.selectedOptions.join(', ')}` : '',
+      filter.startDate ? `開始日: ${formatDate(filter.startDate)}` : '',
+      filter.endDate ? `終了日: ${formatDate(filter.endDate)}` : '',
+    ].filter(Boolean).join(' | ');
+
+    // レーダーチャートのデータを更新
     const newFilters = [...filters];
     newFilters[index].radarData = {
       labels,
       datasets: [
         {
-          label: 'フィルターデータセット',
+          label: selectedFilters,
           data: values,
           backgroundColor: 'rgba(34, 202, 236, 0.2)',
           borderColor: 'rgba(34, 202, 236, 1)',
@@ -235,118 +368,22 @@ const Page: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className='container mx-auto p-4'>
       {filters.map((filter, index) => (
-        <div key={index} className='flex'>
-          <div className='w-1/2 mx-auto p-10 m-10'>
-            <h2 className='font-bold'>銘柄</h2>
-            <Select
-              options={brandOptions}
-              onChange={(selectedOption) => handleBrandChange(index, selectedOption as SingleValue<{ value: string, label: string }>)}
-            />
-
-            <h2 className='mt-5 font-bold'>性別</h2>
-            <div className='flex bg-white'>
-              {genderOptions.map((option) => (
-                <div key={option} className='mr-4'>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value={option}
-                      checked={filter.selectedOptions.includes(option)}
-                      onChange={(event) => handleCheckboxChange(index, event, genderOptions)}
-                    />
-                    {option}
-                  </label>
-                </div>
-              ))}
-              <label>
-                <input
-                  type="checkbox"
-                  value="全て"
-                  checked={genderOptions.every(option => filter.selectedOptions.includes(option))}
-                  onChange={(event) => handleCheckboxChange(index, event, genderOptions)}
-                />
-                全て
-              </label>
-            </div>
-
-            <h2 className='mt-5 font-bold'>年齢</h2>
-            <div className='flex bg-white'>
-              {ageOptions.map((option) => (
-                <div key={option} className='mr-4'>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value={option}
-                      checked={filter.selectedOptions.includes(option)}
-                      onChange={(event) => handleCheckboxChange(index, event, ageOptions)}
-                    />
-                    {option}
-                  </label>
-                </div>
-              ))}
-              <label>
-                <input
-                  type="checkbox"
-                  value="全て"
-                  checked={ageOptions.every(option => filter.selectedOptions.includes(option))}
-                  onChange={(event) => handleCheckboxChange(index, event, ageOptions)}
-                />
-                全て
-              </label>
-            </div>
-
-            <h2 className='mt-5 font-bold'>購入日</h2>
-            <div className="">
-              <DatePicker
-                selected={filter.startDate}
-                onChange={(date) => handleDateChange(index, date, 'start')}
-                selectsStart
-                startDate={filter.startDate}
-                endDate={filter.endDate}
-                dateFormat="yyyy/MM/dd"
-                placeholderText="開始日"
-              />
-              <div className="">
-                <DatePicker
-                  selected={filter.endDate}
-                  onChange={(date) => handleDateChange(index, date, 'end')}
-                  selectsEnd
-                  startDate={filter.startDate}
-                  endDate={filter.endDate}
-                  minDate={filter.startDate}
-                  dateFormat="yyyy/MM/dd"
-                  placeholderText="終了日"
-                  className='mt-2'
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={() => updateRadarData(index)}
-              className='mt-5 bg-blue-500 text-white py-2 px-4 rounded'
-            >
-              検索
-            </button>
-
-            {/* {filter.apiUrl && (
-              <div className='mt-5'>
-                <p>API URL: <a href={filter.apiUrl} target="_blank" rel="noopener noreferrer">{filter.apiUrl}</a></p>
-              </div>
-            )} */}
-          </div>
-
-          <div className='w-1/2 mx-auto rounded-lg p-10 m-10'>
-            <h2 className='font-bold'>レーダーチャート</h2>
-            <Radar className='bg-white rounded-lg p-10' data={filter.radarData} options={radarOptions} />
-          </div>
-        </div>
+        <FilterComponent
+          key={index}
+          filter={filter}
+          index={index}
+          handleCheckboxChange={handleCheckboxChange}
+          handleBrandChange={handleBrandChange}
+          handleDateChange={handleDateChange}
+          updateRadarData={updateRadarData}
+        />
       ))}
 
       <button
         onClick={addFilter}
-        className='mt-5 bg-green-500 text-white py-2 px-4 rounded mx-auto block'
+        className='mt-5 bg-green-500 text-white py-2 px-4 rounded mx-auto block hover:bg-green-700 transition duration-300'
       >
         追加する
       </button>
