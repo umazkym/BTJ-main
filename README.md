@@ -12,7 +12,7 @@ backend/
     ├── schemas.py     # データスキーマの定義ファイル
     ├── models.py      # データベースモデルの定義ファイル
     └── database.py    # データベース接続の設定ファイル
-backend/
+frontend/
 │
 ├── public
 └── src
