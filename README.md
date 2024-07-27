@@ -12,3 +12,10 @@ backend/
     ├── schemas.py     # データスキーマの定義ファイル
     ├── models.py      # データベースモデルの定義ファイル
     └── database.py    # データベース接続の設定ファイル
+backend/
+│
+├── public
+└── src
+    └──app
+       └──layout.tsx
+          └──page.tsx   # 条件に応じてレーダーチャートを表示するコンポーネント
