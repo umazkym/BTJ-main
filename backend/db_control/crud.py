@@ -4,6 +4,7 @@ from db_control.schemas import SurveyRawDataCreate
 from typing import List, Dict, Any, Optional
 from sqlalchemy import func
 from sqlalchemy.sql.expression import or_
+from datetime import datetime
 
 # SurveyRawDataテーブルからデータを取得する関数
 def get_survey_data(db: Session, skip: int = 0, limit: int = 100):
@@ -63,17 +64,20 @@ def get_aggregated_data(
     # 購入日によるフィルタリング
     if purchase_date_ranges and len(purchase_date_ranges) == 2:
         start_date, end_date = purchase_date_ranges
-        query = query.filter(SurveyRawData.purchase_date.between(start_date, end_date))
+        start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+        end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
+        print(f"Filtering data between {start_datetime} and {end_datetime}")
+        query = query.filter(SurveyRawData.purchase_date.between(start_datetime, end_datetime))
 
     # 集計のグループ化
     query = query.group_by(SurveyRawData.brand_id, SurveyRawData.item_id)
 
     results = query.all()
 
-    # デバッグ用にクエリ結果をプリント
-    # 本番環境ではログ機能を使用することを推奨します。
-    print("Query SQL:", str(query.statement.compile(compile_kwargs={"literal_binds": True})))
-    print("Results:", results)
+    # デバッグ用にクエリ結果をプリントするコードです必要に応じて利用してください
+    # 本番環境ではログ機能を使用してください
+    # print("Query SQL:", str(query.statement.compile(compile_kwargs={"literal_binds": True})))
+    # print("Results:", results)
 
     # クエリ結果を整形して返す
     aggregated_data = [
