@@ -2,6 +2,10 @@
 FastAPIを使用したバックエンドと、Next.jsを使用したフロントエンドで構成されています。バックエンドはSQLiteデータベースに接続し、フロントエンドからのリクエストに応じてデータを提供します。
 
 ### ディレクトリ構成
+
+■backend
+Python 3.12.2
+
 backend/
 │
 ├── main.py            # FastAPIのエントリーポイント
@@ -12,6 +16,9 @@ backend/
     ├── schemas.py     # データスキーマの定義ファイル
     ├── models.py      # データベースモデルの定義ファイル
     └── database.py    # データベース接続の設定ファイル
+
+■frontend
+
 frontend/
 │
 ├── public
