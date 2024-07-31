@@ -37,7 +37,7 @@ const brandOptions = [
   { value: "22", label: "暁ブルワリー ドラゴンアイ サン" },
   { value: "23", label: "田沢湖ビール ピルスナー" },
   { value: "24", label: "六甲ビール WEST COAST SESSION IPA" },
-  { value: "25", label: "那須高原ビール ベルジャンホワイト" },
+  { value: "25", value: "那須高原ビール ベルジャンホワイト" },
   { value: "26", label: "ゴールデンラビットビール 青二才" },
   { value: "27", label: "宮島ビール 広島レッドエール" },
   { value: "28", label: "遠野麦酒ZUMONA アルト" },
@@ -125,6 +125,7 @@ const FilterComponent: React.FC<{ filter: Filter, index: number, handleCheckboxC
       <h2 className='font-bold text-xl mb-4'>銘柄</h2>
       <Select
         options={brandOptions}
+        instanceId={`select-brand-${index}`}
         onChange={(selectedOption) => handleBrandChange(index, selectedOption as SingleValue<{ value: string, label: string }>)}
         className='mb-4'
       />
